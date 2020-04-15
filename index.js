@@ -3,7 +3,13 @@ const defaultSubAddress = process.env.vmq_zeromq_sub_address || "tcp://127.0.0.1
 const defaultPubAddress = process.env.vmq_zeromq_pub_address || "tcp://127.0.0.1:5001";
 
 const zeroMQModuleName = "zeromq";
-let zmq = require(zeroMQModuleName);
+let zmq;
+
+try{
+    zmq = require(zeroMQModuleName);
+}catch(err){
+    console.log("zeroMQ not available at this moment.");
+}
 
 function registerKiller(children){
     const events = ["SIGINT", "SIGUSR1", "SIGUSR2", "uncaughtException", "SIGTERM", "SIGHUP"];
@@ -199,34 +205,44 @@ function ZeromqConsumer(bindAddress, monitorFunction){
     };
 
     socket.on("message", (channel, receivedMessage)=>{
-       let callbacks = subscriptions[channel];
-       if(!callbacks || callbacks.length === 0){
-           return console.log(`No subscriptions found for channel ${channel}. Message dropped!`);
-       }
-       for(let i = 0; i<callbacks.length; i++){
-           let cb = callbacks[i];
-           cb(channel, receivedMessage);
-       }
+        let callbacks = subscriptions[channel];
+        if(!callbacks || callbacks.length === 0){
+            return console.log(`No subscriptions found for channel ${channel}. Message dropped!`);
+        }
+        for(let i = 0; i<callbacks.length; i++){
+            let cb = callbacks[i];
+            cb(channel, receivedMessage);
+        }
     });
 }
 
 let instance;
-module.exports.getForwarderInstance = function(address){
+function getForwarderInstance(address){
     if(!instance){
         address = address || defaultForwardAddress;
         instance = new ZeromqForwarder(address);
     }
     return instance;
-};
+}
 
-module.exports.createZeromqProxyNode = function(subAddress, pubAddress, signatureChecker){
+function createZeromqProxyNode(subAddress, pubAddress, signatureChecker){
     subAddress = subAddress || defaultSubAddress;
     pubAddress = pubAddress || defaultPubAddress;
     return new ZeromqProxyNode(subAddress, pubAddress, signatureChecker);
-};
+}
 
-module.exports.createZeromqConsumer = function(bindAddress, monitorFunction){
+function createZeromqConsumer(bindAddress, monitorFunction){
     return new ZeromqConsumer(bindAddress, monitorFunction);
-};
+}
 
-module.exports.registerKiller = registerKiller;
+function testIfAvailable(){
+    return typeof zmq !== "undefined";
+}
+
+module.exports = {
+    getForwarderInstance,
+    createZeromqConsumer,
+    createZeromqProxyNode,
+    testIfAvailable,
+    registerKiller
+};
