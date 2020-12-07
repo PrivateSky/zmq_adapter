@@ -88,7 +88,7 @@ function ZeromqProxyNode(subAddress, pubAddress, signatureChecker){
         let ch = channelTranslationDictionary[channel.toString()];
         if(ch){
             //console.log("[Proxy] - Sending message on channel", ch);
-            subscribersNode.send([Buffer.from(ch), message]);
+            subscribersNode.send([$$.Buffer.from(ch), message]);
         }else{
             //console.log(`[Proxy] - message dropped!`);
         }
@@ -124,8 +124,8 @@ function ZeromqProxyNode(subAddress, pubAddress, signatureChecker){
                     //...
                     //console.log("Err", err);
                 }else{
-                    let newSub = Buffer.alloc(deserializedData.channelName.length+1);
-                    let ch = Buffer.from(deserializedData.channelName);
+                    let newSub = $$.Buffer.alloc(deserializedData.channelName.length+1);
+                    let ch = $$.Buffer.from(deserializedData.channelName);
                     if(type===1){
                         newSub.write("01", 0, 1, "hex");
                     }else{
